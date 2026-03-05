@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sinyal Pusher</title>
+</head>
+<body>
+    <script>
+        // Data dari gambar kamu
+        const appId = "2123632";
+        const key = "fc2cc49f725032db8a58";
+        const cluster = "ap1";
+
+        // Mengambil data dari URL TikFinity
+        const urlParams = new URLSearchParams(window.location.search);
+        const user = urlParams.get('user');
+        const button = urlParams.get('button');
+
+        if (user && button !== null) {
+            // Mengirim sinyal ke Pusher menggunakan Fetch API
+            // Kita arahkan ke server perantara gratis agar POST berhasil
+            fetch(`https://api-${cluster}.pusher.com/apps/${appId}/events?auth_key=${key}`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    name: "gift-event",
+                    channels: ["tiktok-channel"],
+                    data: JSON.stringify({ user: user, button: button })
+                })
+            }).then(() => {
+                document.write("Sinyal Terkirim: " + user);
+            }).catch(() => {
+                document.write("Gagal kirim, pastikan internet lancar.");
+            });
+        } else {
+            document.write("Menunggu data dari TikFinity...");
+        }
+    </script>
+</body>
+</html>
