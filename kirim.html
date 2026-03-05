@@ -1,35 +1,24 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Sinyal Pusher</title>
+    <title>Sinyal Pusher Sukses</title>
 </head>
 <body>
     <script>
-        // Data dari gambar kamu
-        const appId = "2123632";
-        const key = "fc2cc49f725032db8a58";
-        const cluster = "ap1";
-
-        // Mengambil data dari URL TikFinity
         const urlParams = new URLSearchParams(window.location.search);
         const user = urlParams.get('user');
         const button = urlParams.get('button');
 
+        // Data dari screenshot kamu
+        const appId = "2123632";
+        const key = "fc2cc49f725032db8a58";
+        const secret = "b0c10c386ee7a565e228";
+
         if (user && button !== null) {
-            // Mengirim sinyal ke Pusher menggunakan Fetch API
-            // Kita arahkan ke server perantara gratis agar POST berhasil
-            fetch(`https://api-${cluster}.pusher.com/apps/${appId}/events?auth_key=${key}`, {
-                method: 'POST',
-                body: JSON.stringify({
-                    name: "gift-event",
-                    channels: ["tiktok-channel"],
-                    data: JSON.stringify({ user: user, button: button })
-                })
-            }).then(() => {
-                document.write("Sinyal Terkirim: " + user);
-            }).catch(() => {
-                document.write("Gagal kirim, pastikan internet lancar.");
-            });
+            // Menggunakan jembatan eksternal agar tidak kena blokir browser (CORS)
+            const targetUrl = `https://logic-api-pusher.vercel.app/api/send?app_id=${appId}&key=${key}&secret=${secret}&user=${encodeURIComponent(user)}&button=${button}`;
+            
+            window.location.href = targetUrl;
         } else {
             document.write("Menunggu data dari TikFinity...");
         }
