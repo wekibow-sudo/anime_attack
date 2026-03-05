@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>TikTok Live - Player Fix Edition</title>
+<title>TikTok Live - 1 Koin Edition</title>
 <style>
 body{ margin:0; overflow:hidden; background:black; font-family:Arial; touch-action: none; }
 canvas{ display:block; }
@@ -23,7 +23,6 @@ canvas{ display:block; }
 
 #anime-char { position: absolute; pointer-events: none; width: 100px; height: 100px; z-index: 2; display: none; }
 
-/* Tambahan Style untuk Nama NPC */
 .npc-container {
     position: absolute;
     display: flex;
@@ -49,8 +48,8 @@ canvas{ display:block; }
 <body>
 
 <div id="overlay">
-    <h2>FIX PLAYER MOVE</h2>
-    <p>Player sekarang sudah bergerak otomatis lagi!</p>
+    <h2>GIFT 1 KOIN READY</h2>
+    <p>Mawar, TikTok, Sandal, dan lainnya siap main!</p>
     <button id="start-btn" onclick="initGame()">MULAI GAME</button>
 </div>
 
@@ -64,21 +63,12 @@ canvas{ display:block; }
 <div id="boss-container"></div>
 
 <script>
-// --- BAGIAN TAMBAHAN UNTUK WEBHOOK TIKFINITY ---
+// ============================================================
+// LOGIKA PENERIMA GIFT (WEBHOOK/OPEN URL)
+// ============================================================
 const urlParams = new URLSearchParams(window.location.search);
 const giftUser = urlParams.get('user');
-
-// Fungsi ini akan berjalan otomatis jika link dibuka via Webhook TikFinity
-if (giftUser) {
-    // Menunggu game siap sebentar lalu spawn monster
-    setTimeout(() => {
-        if (typeof spawnMonster === "function") {
-            const randomGif = buttons[Math.floor(Math.random() * 5)].gif; 
-            spawnMonster(randomGif, giftUser);
-        }
-    }, 1500);
-}
-// ----------------------------------------------
+const giftBtn = urlParams.get('button');
 
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
@@ -91,11 +81,12 @@ let bombs = [], monsters = [];
 let lastDamageTime = Date.now();
 let player = { x: window.innerWidth/2, y: 0, autoDir: 2.5, isManual: false };
 
+// 10 Tombol dengan GIF Berbeda
 const buttons = [
     { imgSrc: "https://images4.alphacoders.com/129/thumb-350-1291904.webp", gif: "https://media4.giphy.com/media/v1.Y2lkPTZjMDliOTUyYnA0am53NHdlbzBtYng5aDZ5a2lpanBhMmE1dWlpam5kempwM2s4cSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/pwWaY9rHspjc9lKzYI/giphy.gif", imgObj: null, flash: 0 },
     { imgSrc: "https://images7.alphacoders.com/135/thumb-350-1357461.webp", gif: "https://media2.giphy.com/media/v1.Y2lkPTZjMDliOTUydXZqZGd5bjZwdHFoOTRtanAzbWJheXUwcG1kdjY5cXd3bDNhNHYzOSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/2wgTJAEa5YGhUpowOW/giphy.gif", imgObj: null, flash: 0 },
     { imgSrc: "https://avatarfiles.alphacoders.com/352/thumb-350-352798.webp", gif: "https://media4.giphy.com/media/v1.Y2lkPTZjMDliOTUyemRkem5neGdlY2xhc2pkeGhlbjk1c3U0b3dndHVlZWYybGEyMTAzYiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/IUiLMgsBmb3zi/giphy.gif", imgObj: null, flash: 0 },
-    { imgSrc: "https://images5.alphacoders.com/532/thumb-350-532559.webp", gif: "https://media4.giphy.com/media/v1.Y2lkPTZjMDliOTUyMXh5dmd4Y2hkMDk3eDVzb3QweG1tbTM3ajNjNjIwcGljZGtrZWpqciZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/7DtA5riKTwHljx4Fdr/giphy.gif", imgObj: null, flash: 0 },
+    { imgSrc: "https://images5.alphacoders.com/532/thumb-350-532559.webp", gif: "https://media4.giphy.com/media/v1.Y2lkPTZjMDliOTUyMXh5dmd4Y2hkMDk3eDVzb3QweG1tbTM3ajNjNjIwcGljZGtrZWpqciZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/7DtA5riKTwHdr/giphy.gif", imgObj: null, flash: 0 },
     { imgSrc: "https://avatarfiles.alphacoders.com/375/thumb-350-375473.webp", gif: "https://media1.giphy.com/media/v1.Y2lkPTZjMDliOTUyc29obGtqZTMyb2gzdmVmb3pubmZya2xjenR0azJ0amw4dnFmd3ZuMSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/7BW9U2cJPQZ0s/giphy.gif", imgObj: null, flash: 0 },
     { imgSrc: "https://picsum.photos/id/60/100/100", gif: "https://media.giphy.com/media/v1.Y2lkPTZjMDliOTUyeG9yeXJueW1icXN6Z3RyeXp6eHh4eHh4eHh4eHh4eHh4eHh4JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/3o7TKMGx6QZpS5PZte/giphy.gif", imgObj: null, flash: 0 },
     { imgSrc: "https://picsum.photos/id/70/100/100", gif: "https://media.giphy.com/media/v1.Y2lkPTZjMDliOTUyeG9yeXJueW1icXN6Z3RyeXp6eHh4eHh4eHh4eHh4eHh4eHh4JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/3o7TKVUn7iM8FMEU24/giphy.gif", imgObj: null, flash: 0 },
@@ -110,6 +101,16 @@ buttons.forEach(btn => {
     btn.imgObj = img;
 });
 
+if (giftUser) {
+    setTimeout(() => {
+        let index = (giftBtn !== null) ? parseInt(giftBtn) : 0;
+        if (buttons[index]) {
+            buttons[index].flash = 15; 
+            spawnMonster(buttons[index].gif, giftUser); 
+        }
+    }, 1200);
+}
+
 function resize() {
     canvas.width = window.innerWidth; 
     canvas.height = window.innerHeight;
@@ -121,22 +122,18 @@ resize();
 function spawnMonster(gifUrl, name = "Viewer") {
     let container = document.createElement("div");
     container.className = "npc-container";
-    
     let nameTag = document.createElement("div");
     nameTag.className = "npc-name";
     nameTag.innerText = name;
-
     let img = document.createElement("img");
     img.src = gifUrl; 
     img.className = "spawned-anim";
-    
     container.appendChild(nameTag);
     container.appendChild(img);
     bossContainer.appendChild(container);
-
     monsters.push({ 
         x: Math.random()*(canvas.width-110), y: 50 + Math.random()*100, 
-        spawnTime: Date.now(), dir: (Math.random()>0.5?1:-1) * 1.5, el: container 
+        spawnTime: Date.now(), dir: (Math.random()>0.5?1:-1) * 1.8, el: container 
     });
 }
 
@@ -154,22 +151,14 @@ function initGame() {
 function update() {
     if (gameOver) return;
     ctx.clearRect(0,0,canvas.width,canvas.height);
-    
-    if (Date.now() - lastDamageTime > 5000 && hp < 100) {
-        hp += 0.05; 
-    }
-
+    if (Date.now() - lastDamageTime > 5000 && hp < 100) hp += 0.05; 
     player.y = playableHeight - 80;
     if (!player.isManual) {
         player.x += player.autoDir;
-        if (player.x > canvas.width - 50 || player.x < 50) {
-            player.autoDir *= -1;
-        }
+        if (player.x > canvas.width - 50 || player.x < 50) player.autoDir *= -1;
     }
-
     animeEl.style.left = (player.x-50)+"px"; 
     animeEl.style.top = (player.y-20)+"px";
-
     let now = Date.now();
     monsters.forEach((m, i) => {
         if (now - m.spawnTime > 4000) { m.el.remove(); monsters.splice(i,1); return; }
@@ -177,7 +166,6 @@ function update() {
         m.el.style.left = m.x+"px"; m.el.style.top = m.y+"px";
         if (Math.random() < 0.02) bombs.push({ x: m.x+55, y: m.y+80 });
     });
-
     bombs.forEach((b, i) => {
         b.y += 5;
         ctx.font = "30px Arial"; ctx.fillText("⚔️", b.x, b.y);
@@ -188,41 +176,25 @@ function update() {
         }
         if (b.y > playableHeight) bombs.splice(i,1);
     });
-
     ctx.fillStyle = "#222"; ctx.fillRect(0,0,canvas.width,45);
     ctx.fillStyle = hp > 30 ? "#00ffaa" : "#ff3300";
     ctx.fillRect(0,0,canvas.width*(hp/100),45);
-    
     ctx.fillStyle = "white";
     ctx.font = "bold 20px Arial";
     ctx.textAlign = "center";
     ctx.fillText("HOST HP: " + Math.max(0, Math.floor(hp)) + "%", canvas.width/2, 30);
-    
     ctx.fillStyle = "black"; ctx.fillRect(0, playableHeight, canvas.width, canvas.height-playableHeight);
-    
     let btnW = 60, btnH = 60, gap = 12;
     let startX = canvas.width/2 - (5*btnW + 4*gap)/2;
-    
     buttons.forEach((iBtn, i) => {
         let row = Math.floor(i / 5);
         let col = i % 5;
         iBtn.x = startX + col*(btnW + gap);
         iBtn.y = playableHeight + 45 + row*(btnH + gap);
         iBtn.w = btnW; iBtn.h = btnH;
-        
-        if (iBtn.imgObj && iBtn.imgObj.complete) {
-            ctx.drawImage(iBtn.imgObj, iBtn.x, iBtn.y, btnW, btnH);
-        } else {
-            ctx.fillStyle = "#444"; ctx.fillRect(iBtn.x, iBtn.y, btnW, btnH);
-        }
-
-        if (iBtn.flash > 0) {
-            ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
-            ctx.fillRect(iBtn.x, iBtn.y, btnW, btnH);
-            iBtn.flash--;
-        }
+        if (iBtn.imgObj && iBtn.imgObj.complete) ctx.drawImage(iBtn.imgObj, iBtn.x, iBtn.y, btnW, btnH);
+        if (iBtn.flash > 0) { ctx.fillStyle = "rgba(255, 255, 255, 0.5)"; ctx.fillRect(iBtn.x, iBtn.y, btnW, btnH); iBtn.flash--; }
     });
-
     if (hp <= 0) {
         gameOver = true; 
         loseUI.style.display = "block";
@@ -235,22 +207,18 @@ function update() {
 canvas.addEventListener("mousedown", e => {
     let rect = canvas.getBoundingClientRect();
     let mx = e.clientX - rect.left, my = e.clientY - rect.top;
-    buttons.forEach(btn => {
+    buttons.forEach((btn, idx) => {
         if (mx > btn.x && mx < btn.x+btn.w && my > btn.y && my < btn.y+btn.h) {
-            btn.flash = 5; 
-            spawnMonster(btn.gif, "TESTER"); 
+            btn.flash = 10; 
+            spawnMonster(btn.gif, "TESTER");
         }
     });
 });
-
 canvas.addEventListener("touchmove", e => {
     let rect = canvas.getBoundingClientRect();
     let tx = e.touches[0].clientX - rect.left;
     let ty = e.touches[0].clientY - rect.top;
-    if (ty < playableHeight) { 
-        player.isManual = true; 
-        player.x = tx; 
-    }
+    if (ty < playableHeight) { player.isManual = true; player.x = tx; }
 });
 </script>
 </body>
