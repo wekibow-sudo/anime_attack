@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>TikTok Live - Auto Start Edition</title>
+<title>TikTok Live - Realtime Combo Edition</title>
+<script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
 <style>
 body{ margin:0; overflow:hidden; background:black; font-family:Arial; touch-action: none; }
 canvas{ display:block; }
@@ -26,9 +27,9 @@ canvas{ display:block; }
 <body>
 
 <div id="overlay">
-    <h2>WEBHOOK AKTIF</h2>
-    <p>Game akan mulai otomatis saat ada Gift!</p>
-    <button id="start-btn" onclick="initGame()">MULAI GAME MANUAL</button>
+    <h2>REAL-TIME COMBO READY</h2>
+    <p>Monster akan menumpuk tanpa refresh!</p>
+    <button id="start-btn" onclick="initGame()">MULAI GAME</button>
 </div>
 
 <div id="lose-ui">
@@ -41,9 +42,24 @@ canvas{ display:block; }
 <div id="boss-container"></div>
 
 <script>
-const urlParams = new URLSearchParams(window.location.search);
-const giftUser = urlParams.get('user');
-const giftBtn = urlParams.get('button');
+// ============================================================
+// SETTING PUSHER (GANTI KEY DI SINI)
+// ============================================================
+const PUSHER_KEY = 'MASUKKAN_KEY_PUSHER_ANDA'; 
+const PUSHER_CLUSTER = 'ap1';
+
+const pusher = new Pusher(PUSHER_KEY, { cluster: PUSHER_CLUSTER });
+const channel = pusher.subscribe('tiktok-channel');
+
+channel.bind('gift-event', function(data) {
+    // data berisi: { user: "Nama", button: 0 }
+    let index = data.button !== undefined ? parseInt(data.button) : 0;
+    if (buttons[index]) {
+        buttons[index].flash = 15;
+        spawnMonster(buttons[index].gif, data.user || "Viewer");
+    }
+});
+// ============================================================
 
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
@@ -70,17 +86,6 @@ const buttons = [
 ];
 
 buttons.forEach(btn => { let img = new Image(); img.src = btn.imgSrc; btn.imgObj = img; });
-
-// CEK JIKA ADA GIFT SAAT LOADING
-if (giftUser) {
-    window.onload = function() {
-        initGame(); // OTOMATIS MULAI
-        setTimeout(() => {
-            let index = (giftBtn !== null) ? parseInt(giftBtn) : 0;
-            if (buttons[index]) { buttons[index].flash = 15; spawnMonster(buttons[index].gif, giftUser); }
-        }, 1500);
-    };
-}
 
 function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; playableHeight = canvas.height * 0.65; }
 window.addEventListener("resize", resize); resize();
