@@ -1,40 +1,39 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>TikTok Live - Realtime Combo Edition</title>
-<script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
-<style>
-body{ margin:0; overflow:hidden; background:black; font-family:Arial; touch-action: none; }
-canvas{ display:block; }
-#overlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.9); color: white;
-    display: flex; flex-direction: column; justify-content: center; align-items: center;
-    z-index: 100;
-}
-#start-btn { padding: 20px 40px; font-size: 20px; background: #333; color: white; border: 2px solid #fff; border-radius: 10px; cursor: pointer; }
-#lose-ui { position: absolute; top: 30%; width: 100%; text-align: center; display: none; z-index: 10; }
-.text-lose { font-size: 60px; font-weight: bold; color: #ff0000; text-shadow: 0 0 20px #ff0000, 0 0 40px #000; margin: 0; }
-.text-win { font-size: 30px; font-weight: bold; color: #ffffff; text-shadow: 0 0 15px #ff00cc; margin-top: 10px; }
-#anime-char { position: absolute; pointer-events: none; width: 100px; height: 100px; z-index: 2; display: none; }
-.npc-container { position: absolute; display: flex; flex-direction: column; align-items: center; pointer-events: none; z-index: 1; }
-.npc-name { color: white; font-size: 14px; font-weight: bold; text-shadow: 2px 2px 2px black; background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px; margin-bottom: 2px; white-space: nowrap; }
-.spawned-anim { width: 110px; height: 110px; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TikTok Live - Realtime Combo Monster</title>
+    <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+    <style>
+        body { margin:0; overflow:hidden; background:black; font-family:Arial; touch-action: none; }
+        canvas { display:block; }
+        #overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); color: white;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 100;
+        }
+        #start-btn { padding: 15px 30px; font-size: 18px; background: #222; color: white; border: 2px solid #fff; border-radius: 10px; cursor: pointer; }
+        #lose-ui { position: absolute; top: 30%; width: 100%; text-align: center; display: none; z-index: 10; }
+        .text-lose { font-size: 50px; font-weight: bold; color: #ff0000; text-shadow: 0 0 20px #ff0000; margin: 0; }
+        #anime-char { position: absolute; pointer-events: none; width: 90px; height: 90px; z-index: 2; display: none; }
+        .npc-container { position: absolute; display: flex; flex-direction: column; align-items: center; pointer-events: none; z-index: 1; }
+        .npc-name { color: white; font-size: 12px; font-weight: bold; text-shadow: 2px 2px 2px black; background: rgba(0,0,0,0.5); padding: 2px 5px; border-radius: 4px; margin-bottom: 2px; white-space: nowrap; }
+        .spawned-anim { width: 100px; height: 100px; }
+    </style>
 </head>
 <body>
 
 <div id="overlay">
-    <h2>REAL-TIME COMBO AKTIF</h2>
-    <p>Gunakan Pusher untuk memicu monster!</p>
-    <button id="start-btn" onclick="initGame()">MULAI GAME</button>
+    <h2>COMBO SYSTEM AKTIF</h2>
+    <p>Monster akan menumpuk dari Gift!</p>
+    <button id="start-btn" onclick="initGame()">MULAI GAME LIVE</button>
 </div>
 
 <div id="lose-ui">
-    <p class="text-lose">💀 YOU LOSE</p>
-    <p class="text-win">🏆 VIEWERS WIN! 🏆</p>
+    <p class="text-lose">💀 HOST KALAH!</p>
+    <p style="color:white">VIEWERS MENANG 🏆</p>
 </div>
 
 <img id="anime-char" src="https://i.gifer.com/XOsX.gif" alt="player">
@@ -42,53 +41,59 @@ canvas{ display:block; }
 <div id="boss-container"></div>
 
 <script>
-// ============================================================
-// KONFIGURASI PUSHER (KEY ANDA SUDAH TERPASANG)
-// ============================================================
+// ==========================================
+// 1. KONFIGURASI PUSHER (KEY ANDA)
+// ==========================================
 const PUSHER_KEY = 'fc2cc49f725032db8a58'; 
 const PUSHER_CLUSTER = 'ap1';
 
 const pusher = new Pusher(PUSHER_KEY, { cluster: PUSHER_CLUSTER });
 const channel = pusher.subscribe('tiktok-channel');
 
+// Menangkap sinyal dari Pusher (Tanpa Refresh)
 channel.bind('gift-event', function(data) {
-    // Fungsi ini akan berjalan SETIAP KALI ada data masuk ke Pusher
-    // Tanpa perlu refresh halaman!
-    let index = data.button !== undefined ? parseInt(data.button) : 0;
+    let index = (data.button !== undefined) ? parseInt(data.button) : 0;
     if (buttons[index]) {
         buttons[index].flash = 15;
         spawnMonster(buttons[index].gif, data.user || "Viewer");
     }
 });
-// ============================================================
 
+// ==========================================
+// 2. SETTING GAME
+// ==========================================
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 const animeEl = document.getElementById("anime-char");
 const bossContainer = document.getElementById("boss-container");
 const loseUI = document.getElementById("lose-ui");
 
-let playableHeight, hp = 100, gameStarted = false, gameOver = false;
+let playableHeight, hp = 100, gameOver = false;
 let bombs = [], monsters = []; 
 let lastDamageTime = Date.now();
-let player = { x: window.innerWidth/2, y: 0, autoDir: 2.5, isManual: false };
+let player = { x: window.innerWidth/2, y: 0, autoDir: 2.2, isManual: false };
 
 const buttons = [
-    { imgSrc: "https://images4.alphacoders.com/129/thumb-350-1291904.webp", gif: "https://media4.giphy.com/media/v1.Y2lkPTZjMDliOTUyYnA0am53NHdlbzBtYng5aDZ5a2lpanBhMmE1dWlpam5kempwM2s4cSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/pwWaY9rHspjc9lKzYI/giphy.gif", imgObj: null, flash: 0 },
-    { imgSrc: "https://images7.alphacoders.com/135/thumb-350-1357461.webp", gif: "https://media2.giphy.com/media/v1.Y2lkPTZjMDliOTUydXZqZGd5bjZwdHFoOTRtanAzbWJheXUwcG1kdjY5cXd3bDNhNHYzOSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/2wgTJAEa5YGhUpowOW/giphy.gif", imgObj: null, flash: 0 },
-    { imgSrc: "https://avatarfiles.alphacoders.com/352/thumb-350-352798.webp", gif: "https://media4.giphy.com/media/v1.Y2lkPTZjMDliOTUyemRkem5neGdlY2xhc2pkeGhlbjk1c3U0b3dndHVlZWYybGEyMTAzYiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/IUiLMgsBmb3zi/giphy.gif", imgObj: null, flash: 0 },
-    { imgSrc: "https://images5.alphacoders.com/532/thumb-350-532559.webp", gif: "https://media4.giphy.com/media/v1.Y2lkPTZjMDliOTUyMXh5dmd4Y2hkMDk3eDVzb3QweG1tbTM3ajNjNjIwcGljZGtrZWpqciZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/7DtA5riKTwHdr/giphy.gif", imgObj: null, flash: 0 },
-    { imgSrc: "https://avatarfiles.alphacoders.com/375/thumb-350-375473.webp", gif: "https://media1.giphy.com/media/v1.Y2lkPTZjMDliOTUyc29obGtqZTMyb2gzdmVmb3pubmZya2xjenR0azJ0amw4dnFmd3ZuMSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/7BW9U2cJPQZ0s/giphy.gif", imgObj: null, flash: 0 },
-    { imgSrc: "https://picsum.photos/id/60/100/100", gif: "https://media.giphy.com/media/v1.Y2lkPTZjMDliOTUyeG9yeXJueW1icXN6Z3RyeXp6eHh4eHh4eHh4eHh4eHh4eHh4JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/3o7TKMGx6QZpS5PZte/giphy.gif", imgObj: null, flash: 0 },
-    { imgSrc: "https://picsum.photos/id/70/100/100", gif: "https://media.giphy.com/media/v1.Y2lkPTZjMDliOTUyeG9yeXJueW1icXN6Z3RyeXp6eHh4eHh4eHh4eHh4eHh4eHh4JmVwPXYxX2ludGVybmFs_naWZfYnlfaWQmY3Q9Zw/3o7TKVUn7iM8FMEU24/giphy.gif", imgObj: null, flash: 0 },
-    { imgSrc: "https://picsum.photos/id/80/100/100", gif: "https://media.giphy.com/media/v1.Y2lkPTZjMDliOTUyeG9yeXJueW1icXN6Z3RyeXp6eHh4eHh4eHh4eHh4eHh4eHh4JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/l41lTfuxmSXYGz_9C/giphy.gif", imgObj: null, flash: 0 },
-    { imgSrc: "https://picsum.photos/id/90/100/100", gif: "https://media4.giphy.com/media/v1.Y2lkPTZjMDliOTUyemRkem5neGdlY2xhc2pkeGhlbjk1c3U0b3dndHVlZWYybGEyMTAzYiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/r88w2d7tHqazFwNEGN/giphy.gif", imgObj: null, flash: 0 },
-    { imgSrc: "https://picsum.photos/id/100/100/100", gif: "https://media.giphy.com/media/v1.Y2lkPTZjMDliOTUyeG9yeXJueW1icXN6Z3RyeXp6eHh4eHh4eHh4eHh4eHh4eHh4JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/3o7TKMGpxx7SClHhSg/giphy.gif", imgObj: null, flash: 0 }
+    { name: "Rose", gif: "https://media4.giphy.com/media/pwWaY9rHspjc9lKzYI/giphy.gif", imgSrc: "https://images4.alphacoders.com/129/thumb-350-1291904.webp", flash: 0 },
+    { name: "TikTok", gif: "https://media2.giphy.com/media/2wgTJAEa5YGhUpowOW/giphy.gif", imgSrc: "https://images7.alphacoders.com/135/thumb-350-1357461.webp", flash: 0 },
+    { name: "Heart", gif: "https://media4.giphy.com/media/IUiLMgsBmb3zi/giphy.gif", imgSrc: "https://avatarfiles.alphacoders.com/352/thumb-350-352798.webp", flash: 0 },
+    { name: "GG", gif: "https://media4.giphy.com/media/7DtA5riKTwHdr/giphy.gif", imgSrc: "https://images5.alphacoders.com/532/thumb-350-532559.webp", flash: 0 },
+    { name: "Slipper", gif: "https://media1.giphy.com/media/7BW9U2cJPQZ0s/giphy.gif", imgSrc: "https://avatarfiles.alphacoders.com/375/thumb-350-375473.webp", flash: 0 },
+    { name: "IceCream", gif: "https://media.giphy.com/media/3o7TKMGx6QZpS5PZte/giphy.gif", imgSrc: "https://picsum.photos/id/60/100/100", flash: 0 },
+    { name: "Weight", gif: "https://media.giphy.com/media/3o7TKVUn7iM8FMEU24/giphy.gif", imgSrc: "https://picsum.photos/id/70/100/100", flash: 0 },
+    { name: "Tennis", gif: "https://media.giphy.com/media/l41lTfuxmSXYGz_9C/giphy.gif", imgSrc: "https://picsum.photos/id/80/100/100", flash: 0 },
+    { name: "Letter", gif: "https://media4.giphy.com/media/r88w2d7tHqazFwNEGN/giphy.gif", imgSrc: "https://picsum.photos/id/90/100/100", flash: 0 },
+    { name: "Ball", gif: "https://media.giphy.com/media/3o7TKMGpxx7SClHhSg/giphy.gif", imgSrc: "https://picsum.photos/id/100/100/100", flash: 0 }
 ];
 
+// Pre-load Gambar Tombol
 buttons.forEach(btn => { let img = new Image(); img.src = btn.imgSrc; btn.imgObj = img; });
 
-function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; playableHeight = canvas.height * 0.65; }
+function resize() { 
+    canvas.width = window.innerWidth; 
+    canvas.height = window.innerHeight; 
+    playableHeight = canvas.height * 0.7; 
+}
 window.addEventListener("resize", resize); resize();
 
 function spawnMonster(gifUrl, name = "Viewer") {
@@ -96,60 +101,82 @@ function spawnMonster(gifUrl, name = "Viewer") {
     let nameTag = document.createElement("div"); nameTag.className = "npc-name"; nameTag.innerText = name;
     let img = document.createElement("img"); img.src = gifUrl; img.className = "spawned-anim";
     container.appendChild(nameTag); container.appendChild(img); bossContainer.appendChild(container);
-    monsters.push({ x: Math.random()*(canvas.width-110), y: 50 + Math.random()*100, spawnTime: Date.now(), dir: (Math.random()>0.5?1:-1) * 1.8, el: container });
+    monsters.push({ x: Math.random()*(canvas.width-100), y: 60 + Math.random()*80, spawnTime: Date.now(), dir: (Math.random()>0.5?1:-1) * 2, el: container });
 }
 
 function initGame() {
     document.getElementById("overlay").style.display = "none";
     loseUI.style.display = "none"; animeEl.style.display = "block";
-    hp = 100; gameStarted = true; gameOver = false;
-    bombs = []; monsters = []; bossContainer.innerHTML = "";
+    hp = 100; gameOver = false; bombs = []; monsters = []; bossContainer.innerHTML = "";
     lastDamageTime = Date.now(); player.isManual = false; update();
 }
 
 function update() {
     if (gameOver) return;
     ctx.clearRect(0,0,canvas.width,canvas.height);
+    
+    // Auto Heal jika tidak kena damage
     if (Date.now() - lastDamageTime > 5000 && hp < 100) hp += 0.05; 
+    
+    // Gerakan Player
     player.y = playableHeight - 80;
-    if (!player.isManual) { player.x += player.autoDir; if (player.x > canvas.width - 50 || player.x < 50) player.autoDir *= -1; }
-    animeEl.style.left = (player.x-50)+"px"; animeEl.style.top = (player.y-20)+"px";
+    if (!player.isManual) { 
+        player.x += player.autoDir; 
+        if (player.x > canvas.width - 50 || player.x < 50) player.autoDir *= -1; 
+    }
+    animeEl.style.left = (player.x-45)+"px"; animeEl.style.top = (player.y-10)+"px";
+    
     let now = Date.now();
+    // Update Monster
     monsters.forEach((m, i) => {
-        if (now - m.spawnTime > 4000) { m.el.remove(); monsters.splice(i,1); return; }
-        m.x += m.dir; if (m.x < 0 || m.x > canvas.width-110) m.dir *= -1;
+        if (now - m.spawnTime > 5000) { m.el.remove(); monsters.splice(i,1); return; }
+        m.x += m.dir; if (m.x < 0 || m.x > canvas.width-100) m.dir *= -1;
         m.el.style.left = m.x+"px"; m.el.style.top = m.y+"px";
-        if (Math.random() < 0.02) bombs.push({ x: m.x+55, y: m.y+80 });
+        if (Math.random() < 0.03) bombs.push({ x: m.x+50, y: m.y+80 });
     });
+    
+    // Update Bom (Senjata Viewers)
     bombs.forEach((b, i) => {
-        b.y += 5; ctx.font = "30px Arial"; ctx.fillText("⚔️", b.x, b.y);
-        if (b.x > player.x-45 && b.x < player.x+45 && b.y > player.y && b.y < player.y+80) { hp -= 0.67; lastDamageTime = Date.now(); bombs.splice(i,1); }
+        b.y += 6; ctx.font = "24px Arial"; ctx.fillText("⚔️", b.x, b.y);
+        if (b.x > player.x-40 && b.x < player.x+40 && b.y > player.y && b.y < player.y+80) { 
+            hp -= 0.8; lastDamageTime = Date.now(); bombs.splice(i,1); 
+        }
         if (b.y > playableHeight) bombs.splice(i,1);
     });
-    ctx.fillStyle = "#222"; ctx.fillRect(0,0,canvas.width,45);
-    ctx.fillStyle = hp > 30 ? "#00ffaa" : "#ff3300"; ctx.fillRect(0,0,canvas.width*(hp/100),45);
-    ctx.fillStyle = "white"; ctx.font = "bold 20px Arial"; ctx.textAlign = "center"; ctx.fillText("HOST HP: " + Math.max(0, Math.floor(hp)) + "%", canvas.width/2, 30);
-    ctx.fillStyle = "black"; ctx.fillRect(0, playableHeight, canvas.width, canvas.height-playableHeight);
-    let btnW = 60, btnH = 60, gap = 12, startX = canvas.width/2 - (5*btnW + 4*gap)/2;
-    buttons.forEach((iBtn, i) => {
+    
+    // Bar HP Host
+    ctx.fillStyle = "#333"; ctx.fillRect(0,0,canvas.width,40);
+    ctx.fillStyle = hp > 30 ? "#00ff88" : "#ff4444"; ctx.fillRect(0,0,canvas.width*(hp/100),40);
+    ctx.fillStyle = "white"; ctx.font = "bold 18px Arial"; ctx.textAlign = "center"; 
+    ctx.fillText("NYAWA HOST: " + Math.max(0, Math.floor(hp)) + "%", canvas.width/2, 26);
+    
+    // Area Tombol (Bawah)
+    ctx.fillStyle = "#111"; ctx.fillRect(0, playableHeight, canvas.width, canvas.height-playableHeight);
+    let btnW = 55, btnH = 55, gap = 10, startX = canvas.width/2 - (5*btnW + 4*gap)/2;
+    buttons.forEach((b, i) => {
         let row = Math.floor(i / 5), col = i % 5;
-        iBtn.x = startX + col*(btnW + gap); iBtn.y = playableHeight + 45 + row*(btnH + gap); iBtn.w = btnW; iBtn.h = btnH;
-        if (iBtn.imgObj && iBtn.imgObj.complete) ctx.drawImage(iBtn.imgObj, iBtn.x, iBtn.y, btnW, btnH);
-        if (iBtn.flash > 0) { ctx.fillStyle = "rgba(255, 255, 255, 0.5)"; ctx.fillRect(iBtn.x, iBtn.y, btnW, btnH); iBtn.flash--; }
+        b.x = startX + col*(btnW+gap); b.y = playableHeight + 40 + row*(btnH+gap); b.w = btnW; b.h = btnH;
+        if (b.imgObj) ctx.drawImage(b.imgObj, b.x, b.y, btnW, btnH);
+        if (b.flash > 0) { ctx.fillStyle = "rgba(255,255,255,0.6)"; ctx.fillRect(b.x, b.y, btnW, btnH); b.flash--; }
     });
-    if (hp <= 0) { gameOver = true; loseUI.style.display = "block"; animeEl.style.display = "none"; bossContainer.innerHTML = ""; setTimeout(initGame, 4000); } 
-    else { requestAnimationFrame(update); }
+
+    if (hp <= 0) { 
+        gameOver = true; loseUI.style.display = "block"; animeEl.style.display = "none"; 
+        setTimeout(initGame, 5000); 
+    } else { 
+        requestAnimationFrame(update); 
+    }
 }
 
-canvas.addEventListener("mousedown", e => {
-    let rect = canvas.getBoundingClientRect();
-    let mx = e.clientX - rect.left, my = e.clientY - rect.top;
-    buttons.forEach(btn => { if (mx > btn.x && mx < btn.x+btn.w && my > btn.y && my < btn.y+btn.h) { btn.flash = 10; spawnMonster(btn.gif, "TESTER"); } });
+// Kontrol Sentuh
+canvas.addEventListener("touchstart", e => {
+    let tx = e.touches[0].clientX, ty = e.touches[0].clientY;
+    if (ty < playableHeight) { player.isManual = true; player.x = tx; }
+    buttons.forEach(btn => { if (tx > btn.x && tx < btn.x+btn.w && ty > btn.y && ty < btn.y+btn.h) { spawnMonster(btn.gif, "TESTER"); } });
 });
 canvas.addEventListener("touchmove", e => {
-    let rect = canvas.getBoundingClientRect();
-    let tx = e.touches[0].clientX - rect.left, ty = e.touches[0].clientY - rect.top;
-    if (ty < playableHeight) { player.isManual = true; player.x = tx; }
+    let tx = e.touches[0].clientX, ty = e.touches[0].clientY;
+    if (ty < playableHeight) { player.x = tx; }
 });
 </script>
 </body>
