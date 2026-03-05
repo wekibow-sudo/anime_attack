@@ -27,8 +27,8 @@ canvas{ display:block; }
 <body>
 
 <div id="overlay">
-    <h2>REAL-TIME COMBO READY</h2>
-    <p>Monster akan menumpuk tanpa refresh!</p>
+    <h2>REAL-TIME COMBO AKTIF</h2>
+    <p>Gunakan Pusher untuk memicu monster!</p>
     <button id="start-btn" onclick="initGame()">MULAI GAME</button>
 </div>
 
@@ -43,16 +43,17 @@ canvas{ display:block; }
 
 <script>
 // ============================================================
-// SETTING PUSHER (GANTI KEY DI SINI)
+// KONFIGURASI PUSHER (KEY ANDA SUDAH TERPASANG)
 // ============================================================
-const PUSHER_KEY = 'MASUKKAN_KEY_PUSHER_ANDA'; 
+const PUSHER_KEY = 'fc2cc49f725032db8a58'; 
 const PUSHER_CLUSTER = 'ap1';
 
 const pusher = new Pusher(PUSHER_KEY, { cluster: PUSHER_CLUSTER });
 const channel = pusher.subscribe('tiktok-channel');
 
 channel.bind('gift-event', function(data) {
-    // data berisi: { user: "Nama", button: 0 }
+    // Fungsi ini akan berjalan SETIAP KALI ada data masuk ke Pusher
+    // Tanpa perlu refresh halaman!
     let index = data.button !== undefined ? parseInt(data.button) : 0;
     if (buttons[index]) {
         buttons[index].flash = 15;
@@ -79,7 +80,7 @@ const buttons = [
     { imgSrc: "https://images5.alphacoders.com/532/thumb-350-532559.webp", gif: "https://media4.giphy.com/media/v1.Y2lkPTZjMDliOTUyMXh5dmd4Y2hkMDk3eDVzb3QweG1tbTM3ajNjNjIwcGljZGtrZWpqciZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/7DtA5riKTwHdr/giphy.gif", imgObj: null, flash: 0 },
     { imgSrc: "https://avatarfiles.alphacoders.com/375/thumb-350-375473.webp", gif: "https://media1.giphy.com/media/v1.Y2lkPTZjMDliOTUyc29obGtqZTMyb2gzdmVmb3pubmZya2xjenR0azJ0amw4dnFmd3ZuMSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/7BW9U2cJPQZ0s/giphy.gif", imgObj: null, flash: 0 },
     { imgSrc: "https://picsum.photos/id/60/100/100", gif: "https://media.giphy.com/media/v1.Y2lkPTZjMDliOTUyeG9yeXJueW1icXN6Z3RyeXp6eHh4eHh4eHh4eHh4eHh4eHh4JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/3o7TKMGx6QZpS5PZte/giphy.gif", imgObj: null, flash: 0 },
-    { imgSrc: "https://picsum.photos/id/70/100/100", gif: "https://media.giphy.com/media/v1.Y2lkPTZjMDliOTUyeG9yeXJueW1icXN6Z3RyeXp6eHh4eHh4eHh4eHh4eHh4eHh4JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/3o7TKVUn7iM8FMEU24/giphy.gif", imgObj: null, flash: 0 },
+    { imgSrc: "https://picsum.photos/id/70/100/100", gif: "https://media.giphy.com/media/v1.Y2lkPTZjMDliOTUyeG9yeXJueW1icXN6Z3RyeXp6eHh4eHh4eHh4eHh4eHh4eHh4JmVwPXYxX2ludGVybmFs_naWZfYnlfaWQmY3Q9Zw/3o7TKVUn7iM8FMEU24/giphy.gif", imgObj: null, flash: 0 },
     { imgSrc: "https://picsum.photos/id/80/100/100", gif: "https://media.giphy.com/media/v1.Y2lkPTZjMDliOTUyeG9yeXJueW1icXN6Z3RyeXp6eHh4eHh4eHh4eHh4eHh4eHh4JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/l41lTfuxmSXYGz_9C/giphy.gif", imgObj: null, flash: 0 },
     { imgSrc: "https://picsum.photos/id/90/100/100", gif: "https://media4.giphy.com/media/v1.Y2lkPTZjMDliOTUyemRkem5neGdlY2xhc2pkeGhlbjk1c3U0b3dndHVlZWYybGEyMTAzYiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/r88w2d7tHqazFwNEGN/giphy.gif", imgObj: null, flash: 0 },
     { imgSrc: "https://picsum.photos/id/100/100/100", gif: "https://media.giphy.com/media/v1.Y2lkPTZjMDliOTUyeG9yeXJueW1icXN6Z3RyeXp6eHh4eHh4eHh4eHh4eHh4eHh4JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/3o7TKMGpxx7SClHhSg/giphy.gif", imgObj: null, flash: 0 }
