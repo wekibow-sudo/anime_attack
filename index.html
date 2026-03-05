@@ -64,6 +64,22 @@ canvas{ display:block; }
 <div id="boss-container"></div>
 
 <script>
+// --- BAGIAN TAMBAHAN UNTUK WEBHOOK TIKFINITY ---
+const urlParams = new URLSearchParams(window.location.search);
+const giftUser = urlParams.get('user');
+
+// Fungsi ini akan berjalan otomatis jika link dibuka via Webhook TikFinity
+if (giftUser) {
+    // Menunggu game siap sebentar lalu spawn monster
+    setTimeout(() => {
+        if (typeof spawnMonster === "function") {
+            const randomGif = buttons[Math.floor(Math.random() * 5)].gif; 
+            spawnMonster(randomGif, giftUser);
+        }
+    }, 1500);
+}
+// ----------------------------------------------
+
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 const animeEl = document.getElementById("anime-char");
@@ -73,7 +89,6 @@ const loseUI = document.getElementById("lose-ui");
 let playableHeight, hp = 100, gameStarted = false, gameOver = false;
 let bombs = [], monsters = []; 
 let lastDamageTime = Date.now();
-// Kecepatan gerak otomatis diatur di autoDir
 let player = { x: window.innerWidth/2, y: 0, autoDir: 2.5, isManual: false };
 
 const buttons = [
@@ -103,7 +118,6 @@ function resize() {
 window.addEventListener("resize", resize); 
 resize();
 
-// FITUR TAMBAHAN: spawnMonster sekarang menerima parameter name
 function spawnMonster(gifUrl, name = "Viewer") {
     let container = document.createElement("div");
     container.className = "npc-container";
@@ -133,7 +147,7 @@ function initGame() {
     hp = 100; gameStarted = true; gameOver = false;
     bombs = []; monsters = []; bossContainer.innerHTML = "";
     lastDamageTime = Date.now();
-    player.isManual = false; // Reset ke gerak otomatis saat mulai
+    player.isManual = false; 
     update();
 }
 
@@ -141,16 +155,13 @@ function update() {
     if (gameOver) return;
     ctx.clearRect(0,0,canvas.width,canvas.height);
     
-    // Regen HP perlahan
     if (Date.now() - lastDamageTime > 5000 && hp < 100) {
         hp += 0.05; 
     }
 
-    // FIX GERAK OTOMATIS:
     player.y = playableHeight - 80;
     if (!player.isManual) {
         player.x += player.autoDir;
-        // Memantul jika menabrak pinggir layar
         if (player.x > canvas.width - 50 || player.x < 50) {
             player.autoDir *= -1;
         }
@@ -178,7 +189,6 @@ function update() {
         if (b.y > playableHeight) bombs.splice(i,1);
     });
 
-    // Bar HP
     ctx.fillStyle = "#222"; ctx.fillRect(0,0,canvas.width,45);
     ctx.fillStyle = hp > 30 ? "#00ffaa" : "#ff3300";
     ctx.fillRect(0,0,canvas.width*(hp/100),45);
@@ -188,7 +198,6 @@ function update() {
     ctx.textAlign = "center";
     ctx.fillText("HOST HP: " + Math.max(0, Math.floor(hp)) + "%", canvas.width/2, 30);
     
-    // Panel Kontrol
     ctx.fillStyle = "black"; ctx.fillRect(0, playableHeight, canvas.width, canvas.height-playableHeight);
     
     let btnW = 60, btnH = 60, gap = 12;
@@ -223,33 +232,25 @@ function update() {
     } else { requestAnimationFrame(update); }
 }
 
-// Deteksi klik tombol NPC
 canvas.addEventListener("mousedown", e => {
     let rect = canvas.getBoundingClientRect();
     let mx = e.clientX - rect.left, my = e.clientY - rect.top;
     buttons.forEach(btn => {
         if (mx > btn.x && mx < btn.x+btn.w && my > btn.y && my < btn.y+btn.h) {
             btn.flash = 5; 
-            spawnMonster(btn.gif, "TESTER"); // Menampilkan nama "TESTER" saat diklik manual
+            spawnMonster(btn.gif, "TESTER"); 
         }
     });
 });
 
-// Kontrol manual player (Sentuh layar area atas)
 canvas.addEventListener("touchmove", e => {
     let rect = canvas.getBoundingClientRect();
     let tx = e.touches[0].clientX - rect.left;
     let ty = e.touches[0].clientY - rect.top;
-    
-    // Jika sentuhan di area permainan (bukan di panel tombol)
     if (ty < playableHeight) { 
         player.isManual = true; 
         player.x = tx; 
     }
-});
-
-canvas.addEventListener("touchend", () => {
-    // player.isManual = false;
 });
 </script>
 </body>
